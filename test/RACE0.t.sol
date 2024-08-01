@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -87,5 +87,32 @@ contract R0Q3Test is Test {
         r0q3.transferFunds(payable(owner), depositAmount);
         assertEq(address(r0q3).balance, 0);
         assertEq(address(owner).balance, depositAmount);       
+    }
+}
+
+contract R0Q4Test is Test {
+    R0Q4 r0q4;
+    address testAddr = makeAddr("testAddr");
+
+    function setUp() public {
+        r0q4 = new R0Q4();
+
+        // set address id 0 to testAddr
+        r0q4.setAddress(0, testAddr);
+    }
+
+    function test_getAddressReturnesZeroAddressWhenCheckIsFALSE() public {
+        /* 
+            check is false (by default) so the code in the getAddress function body
+            will not be executed and therefore the default value for address type is returened
+        */
+        assertEq(r0q4.getAddress(0), address(0x0));
+    }
+    function test_getAddressReturnesExpectedAddressWhenCheckIsTRUE() public {
+        // set the check flag to true
+        r0q4.setCheck(true);
+
+        // calling getAddress returnes the expected address
+        assertEq(r0q4.getAddress(0), testAddr);
     }
 }

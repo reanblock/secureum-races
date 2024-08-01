@@ -30,3 +30,32 @@ contract R0Q3 {
   // to send eth during test
   receive() payable external {}
 }
+
+contract R0Q4 {
+  // Assume other required functionality is correctly implemented
+  
+  mapping (uint256 => address) addresses;
+  bool check; // false by default
+
+  event GetAddress(uint256 id);
+  
+  modifier onlyIf() {
+    if (check) {
+      _;
+    }
+  }
+
+  // in mainnet this would need access control!
+  function setCheck(bool _check) public {
+    check = _check;
+  }
+  
+  function setAddress(uint id, address addr) public {
+    addresses[id] = addr;
+  }
+  
+  function getAddress(uint id) public onlyIf returns (address) {
+    emit GetAddress(id);
+    return addresses[id];
+  }
+}
