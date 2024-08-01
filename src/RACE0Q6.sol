@@ -10,7 +10,7 @@ contract R0Q6 is ReentrancyGuard {
   // For e.g. users have deposited balances in the contract
   // Assume nonReentrant modifier is always applied
   
-  mapping (address => uint256) balances;
+  mapping (address => uint256) public balances;
   
   function withdraw(uint256 amount) external nonReentrant {
     msg.sender.call{value: amount}("");
@@ -21,4 +21,6 @@ contract R0Q6 is ReentrancyGuard {
     console.log("balances[msg.sender]: ", balances[msg.sender]);
     console.log("withdraw: ", amount);
   }
+
+  receive() external payable {}
 }
