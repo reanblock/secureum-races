@@ -32,6 +32,7 @@ contract R0Q3 {
   receive() payable external {}
 }
 
+// R0Q4 - RACE0, QUESTION4
 contract R0Q4 {
   // Assume other required functionality is correctly implemented
   
@@ -61,6 +62,7 @@ contract R0Q4 {
   }
 }
 
+// R0Q5 - RACE0, QUESTION5
 contract R0Q5 {
   // Assume other required functionality is correctly implemented
   address private owner = address(0x78c4e41228C2874C436fA57108dC63D9497E5be5);
@@ -85,3 +87,5 @@ contract R0Q5 {
     // console.log(success);
   }
 }
+
+// R0Q6 - RACE0, QUESTION6 -> refer to ./src/RACE0Q6.sol
