@@ -89,3 +89,14 @@ contract R0Q5 {
 }
 
 // R0Q6 - RACE0, QUESTION6 -> refer to ./src/RACE0Q6.sol
+
+// R0Q7 - RACE0, QUESTION7
+contract R0Q7 {
+  // Assume other required functionality is correctly implemented
+  uint256 private constant secret = 123;
+  
+  function diceRoll() external view returns (uint256) {
+    return (((block.timestamp * secret) % 6) + 1);
+  }
+}
+
