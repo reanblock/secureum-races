@@ -100,3 +100,22 @@ contract R0Q7 {
   }
 }
 
+contract R0Q8 {
+  // Assume other required functionality is correctly implemented
+  // Contract admin set to deployer in constructor (not shown)
+
+  // hardcode admin address for test
+  address public admin = 0x6C328AFB6172025FD0e6eF426f1c56624a00432C;
+  
+  modifier onlyAdmin {
+    require(tx.origin == admin);
+    _;
+  }
+  
+  function emergencyWithdraw() external payable onlyAdmin {
+    payable(msg.sender).transfer(address(this).balance);
+  }
+
+  // to directly receive eth during tests
+  receive() external payable {}
+}
