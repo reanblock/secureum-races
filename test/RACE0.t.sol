@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8, R0Q9} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -330,4 +330,30 @@ contract R0Q8Attacker {
     }
 
     receive() external payable {}
+}
+
+contract R0Q9Test is Test {
+    R0Q9 r0q9;
+    address contributor = makeAddr("contributor");
+    address attacker = makeAddr("attacker");
+
+    function setUp() public {
+        r0q9 = new R0Q9();
+        vm.deal(contributor, 99 ether);
+        vm.deal(attacker, 2 ether);
+    }
+
+    function test_UseOfStrictEqualityMayBreakTheMAX_FUND_RAISEConstraint() public {
+        // R0Q9 contract can endup holding more than the MAX_FUND_RAISE
+        
+        // assume legit contrinuters add 99 ether to R0Q9
+        vm.prank(contributor);
+        r0q9.contribute{value: 99 ether}();
+
+        vm.prank(attacker);
+        r0q9.contribute{value: 1.1 ether}();
+
+        // now R0Q9 contract holds more than the expected MAX_FUND_RAISE (100 ether) amount
+        assertGt(address(r0q9).balance, 100 ether);
+    }
 }

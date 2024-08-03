@@ -119,3 +119,13 @@ contract R0Q8 {
   // to directly receive eth during tests
   receive() external payable {}
 }
+
+contract R0Q9 {
+  // Assume other required functionality is correctly implemented
+  uint256 private constant MAX_FUND_RAISE = 100 ether;
+  mapping (address => uint256) contributions;
+  function contribute() external payable {
+    require(address(this).balance != MAX_FUND_RAISE);
+    contributions[msg.sender] += msg.value;
+  }
+}
