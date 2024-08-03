@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8, R0Q9, R0Q10} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8, R0Q9, R0Q10, R0Q11, R0Q11Ownable2Step} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -369,5 +369,48 @@ contract R0Q10Test is Test {
         // calling with an eoa and not a contract will not cause a revert because 
         // sucess returned is true and so require(success) will pass
         r0q10.callMe(eoa);
+    }
+}
+
+contract R0Q11Test is Test {
+    R0Q11 r0q11;
+    R0Q11Ownable2Step r0q11Ownable2Step;
+    address oldAdmin = makeAddr("oldAdmin");
+    address newAdmin = makeAddr("newAdmin");
+
+    function setUp() public {
+        r0q11 = new R0Q11();
+
+        // sets the owner address as the deployer account (oldAdmin)
+        vm.prank(oldAdmin);
+        r0q11Ownable2Step = new R0Q11Ownable2Step();
+    }
+
+    function test_SingleStepChangeOfCriticalAddress() public {
+        // R0Q11 allows updating the admin address in one step like so
+        assertEq(r0q11.admin(), 0x6C328AFB6172025FD0e6eF426f1c56624a00432C);
+
+        r0q11.setAdmin(newAdmin);
+        assertEq(r0q11.admin(), newAdmin);
+
+        // test the 2 step approach with the R0Q11Ownable2Step contract
+        assertEq(r0q11Ownable2Step.owner(), oldAdmin);
+        
+        // initiate ownership transfer
+        vm.prank(oldAdmin);
+        r0q11Ownable2Step.transferOwnership(newAdmin);
+
+        // confirm the owner has not changed yet (still oldAdmin)
+        assertEq(r0q11Ownable2Step.owner(), oldAdmin);
+
+        // however, pendingOwner is the newAdmin
+        assertEq(r0q11Ownable2Step.pendingOwner(), newAdmin);
+
+        // now the newAdmin needs to call acceptOwnership to conplete the transfer
+        vm.prank(newAdmin);
+        r0q11Ownable2Step.acceptOwnership();
+
+        // confirm the owner is the newAdmin
+        assertEq(r0q11Ownable2Step.owner(), newAdmin);
     }
 }

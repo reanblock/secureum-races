@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.13;
+pragma solidity 0.8.20;
 import {console} from "forge-std/Test.sol";
+import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 // R0Q2 - RACE0, QUESTION2
 contract R0Q2 {
@@ -138,4 +139,18 @@ contract R0Q10 {
     console.log(success);
     require(success);
   }
+}
+
+contract R0Q11 {
+  // Assume other required functionality is correctly implemented
+  // Assume admin is set correctly to contract deployer in constructor
+  address public admin = 0x6C328AFB6172025FD0e6eF426f1c56624a00432C;
+  
+  function setAdmin (address _newAdmin) external {
+    admin = _newAdmin;
+  }
+}
+
+contract R0Q11Ownable2Step is Ownable2Step {
+  constructor() Ownable(msg.sender) {}
 }
