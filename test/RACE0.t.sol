@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8, R0Q9} from "../src/Race0.sol";
+import {R0Q2, R0Q3, R0Q4, R0Q5, R0Q7, R0Q8, R0Q9, R0Q10} from "../src/Race0.sol";
 
 contract R0Q2Test is Test {
     R0Q2 public r0q2;
@@ -355,5 +355,19 @@ contract R0Q9Test is Test {
 
         // now R0Q9 contract holds more than the expected MAX_FUND_RAISE (100 ether) amount
         assertGt(address(r0q9).balance, 100 ether);
+    }
+}
+
+contract R0Q10Test is Test {
+    R0Q10 r0q10;
+    address eoa = makeAddr("eoa");
+    function setUp() public {
+        r0q10 = new R0Q10();
+    }
+
+    function test_callMeRequireWillPassForANonExistentContractAddress() public {
+        // calling with an eoa and not a contract will not cause a revert because 
+        // sucess returned is true and so require(success) will pass
+        r0q10.callMe(eoa);
     }
 }

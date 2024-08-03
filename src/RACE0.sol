@@ -129,3 +129,13 @@ contract R0Q9 {
     contributions[msg.sender] += msg.value;
   }
 }
+
+contract R0Q10 {
+  // Assume other required functionality is correctly implemented
+
+  function callMe (address target) external {
+    (bool success, ) = target.call("");
+    console.log(success);
+    require(success);
+  }
+}
