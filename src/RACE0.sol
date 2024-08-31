@@ -154,3 +154,25 @@ contract R0_Q11 {
 contract R0_Q11_Ownable2Step is Ownable2Step {
   constructor() Ownable(msg.sender) {}
 }
+
+contract R0_Q12 {
+  // Assume other required functionality is correctly implemented 
+  address admin;
+  address payable public pool;
+  constructor(address _admin) {
+    admin = _admin;
+  } 
+
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+  
+  function setPoolAddress(address payable _pool) external onlyAdmin {
+    pool = _pool;
+  }
+
+  function addLiquidity() payable external {
+    pool.transfer(msg.value);
+  }
+}

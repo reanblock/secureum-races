@@ -2,7 +2,17 @@
 pragma solidity 0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
-import {R0_Q2, R0_Q3, R0_Q4, R0_Q5, R0_Q7, R0_Q8, R0_Q9, R0_Q10, R0_Q11, R0_Q11_Ownable2Step} from "../src/Race0.sol";
+import {R0_Q2, 
+        R0_Q3, 
+        R0_Q4, 
+        R0_Q5, 
+        R0_Q7, 
+        R0_Q8, 
+        R0_Q9, 
+        R0_Q10, 
+        R0_Q11, 
+        R0_Q11_Ownable2Step, 
+        R0_Q12} from "../src/Race0.sol";
 
 contract R0_Q2_Test is Test {
     R0_Q2 public r0_q2;
@@ -417,5 +427,39 @@ contract R0_Q11_Test is Test {
 
         // confirm the owner is the newAdmin
         assertEq(r0_q11_Ownable2Step.owner(), newAdmin);
+    }
+}
+
+contract R0_Q12_Test is Test {
+    R0_Q12 r0_q12;
+    address admin = makeAddr("admin");
+    address liquidityProvider = makeAddr("liquidityProvider");
+
+    function setUp() public {
+        r0_q12 = new R0_Q12(admin);
+        vm.deal(liquidityProvider, 10 ether);
+    }
+
+    function test_deployed() public {
+        console.log(address(r0_q12));
+    }
+
+    function test_UninitializedPoolStorageVariable() public {
+        // the pool address is not initialized
+        assertEq(r0_q12.pool(), address(0x0));
+
+        console.log(r0_q12.pool().balance);
+
+        // which prevents the addLiquidity function from being called?
+        assertEq(liquidityProvider.balance, 10 ether);
+
+        vm.prank(liquidityProvider);
+        r0_q12.addLiquidity{value: 1 ether}();
+
+        // lp has lost the ether sent to the contract!
+        assertEq(liquidityProvider.balance, 9 ether);
+        
+        // the zero address has the lost (burnt) ether
+        assertEq(r0_q12.pool().balance, 1 ether);
     }
 }
