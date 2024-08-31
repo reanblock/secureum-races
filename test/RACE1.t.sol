@@ -81,3 +81,5 @@ contract R1_Q5 is InSecureumTokenTestBase {
         // etc...
     }
 }
+
+// NOTE Q6, Q7, Q8 does not require tests
