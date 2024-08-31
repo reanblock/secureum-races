@@ -1,6 +1,6 @@
 # Secureum Races 
 
-## A deepdive into each Securum RACE!
+## A deep dive into each Securum RACE!
 
 Each RACE is reviewed and code is teested in the Reanblock video on YouTube.
 
