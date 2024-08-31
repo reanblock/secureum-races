@@ -2,7 +2,7 @@
 pragma solidity ^0.7.0;
 
 contract InSecureumToken {
-  mapping(address => uint) private balances;
+  mapping(address => uint) public balances;
   uint public decimals = 10**18; // decimals of the token
   uint public totalSupply; // total supply
   uint MAX_SUPPLY = 100 ether; // Maximum total supply
