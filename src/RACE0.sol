@@ -4,7 +4,7 @@ import {console} from "forge-std/Test.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 // R0Q2 - RACE0, QUESTION2
-contract R0Q2 {
+contract R0_Q2 {
   // Assume other required functionality is correctly implemented
   function kill() public {
     selfdestruct(payable(0x0));
@@ -15,7 +15,7 @@ contract R0Q2 {
 }
 
 // R0Q3 - RACE0, QUESTION3
-contract R0Q3 {
+contract R0_Q3 {
   address public owner = address(0x39b7A42Fc45A5c669D980161346953e48154682c);
   // Assume other required functionality is correctly implemented
   
@@ -34,7 +34,7 @@ contract R0Q3 {
 }
 
 // R0Q4 - RACE0, QUESTION4
-contract R0Q4 {
+contract R0_Q4 {
   // Assume other required functionality is correctly implemented
   
   mapping (uint256 => address) addresses;
@@ -64,7 +64,7 @@ contract R0Q4 {
 }
 
 // R0Q5 - RACE0, QUESTION5
-contract R0Q5 {
+contract R0_Q5 {
   // Assume other required functionality is correctly implemented
   address private owner = address(0x78c4e41228C2874C436fA57108dC63D9497E5be5);
   
@@ -92,7 +92,7 @@ contract R0Q5 {
 // R0Q6 - RACE0, QUESTION6 -> refer to ./src/RACE0Q6.sol
 
 // R0Q7 - RACE0, QUESTION7
-contract R0Q7 {
+contract R0_Q7 {
   // Assume other required functionality is correctly implemented
   uint256 private constant secret = 123;
   
@@ -101,7 +101,7 @@ contract R0Q7 {
   }
 }
 
-contract R0Q8 {
+contract R0_Q8 {
   // Assume other required functionality is correctly implemented
   // Contract admin set to deployer in constructor (not shown)
 
@@ -121,7 +121,7 @@ contract R0Q8 {
   receive() external payable {}
 }
 
-contract R0Q9 {
+contract R0_Q9 {
   // Assume other required functionality is correctly implemented
   uint256 private constant MAX_FUND_RAISE = 100 ether;
   mapping (address => uint256) contributions;
@@ -131,7 +131,7 @@ contract R0Q9 {
   }
 }
 
-contract R0Q10 {
+contract R0_Q10 {
   // Assume other required functionality is correctly implemented
 
   function callMe (address target) external {
@@ -141,7 +141,7 @@ contract R0Q10 {
   }
 }
 
-contract R0Q11 {
+contract R0_Q11 {
   // Assume other required functionality is correctly implemented
   // Assume admin is set correctly to contract deployer in constructor
   address public admin = 0x6C328AFB6172025FD0e6eF426f1c56624a00432C;
@@ -151,6 +151,6 @@ contract R0Q11 {
   }
 }
 
-contract R0Q11Ownable2Step is Ownable2Step {
+contract R0_Q11_Ownable2Step is Ownable2Step {
   constructor() Ownable(msg.sender) {}
 }
