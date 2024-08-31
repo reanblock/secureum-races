@@ -16,7 +16,8 @@ import {R0_Q2,
         R0_Q13,
         R0_Q13_V2,
         R0_Q14,
-        R0_Q15} from "../src/Race0.sol";
+        R0_Q15,
+        R0_Q16} from "../src/Race0.sol";
 
 // import ERC1967Proxy for upgradable contract tests
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -708,5 +709,93 @@ contract R0_Q15_Attacker {
             // keep attacking until target contract is drained
             attack();
         }
+    }
+}
+
+contract R0_Q16_Test is Test {
+    R0_Q16 r0_q16;
+    address signer;
+    uint256 signerKey;
+    // arbitrary example param to sign - could be anything
+    uint256 withdrawAmount = 10 ether; 
+    bytes32 message;
+    uint8 sigV;
+    bytes32 sigR;
+    bytes32 sigS;
+
+    address attacker = makeAddr("attacker");
+
+    function setUp() public {
+        (signer, signerKey) = makeAddrAndKey("signer");
+        r0_q16 = new R0_Q16();
+        /*
+            NOTE: 
+            
+            Message format to be signed must be the keccak256 hash in the following format:
+            "\x19Ethereum Signed Message\n" + len(msg) + concatinated message params
+
+            \x19: This is a single byte representing the ASCII value 25 (in hexadecimal), 
+            which serves as a prefix to ensure that the message is treated as a special 
+            Ethereum message rather than raw data.  It’s a way to make sure that the resulting 
+            hash is not susceptible to being  misused as a signature for a transaction 
+            or another type of data.
+
+            In this test the 'concatinated message params' is 'signer(20 bytes) + withdrawAmount(32 bytes)'.
+            So len(msg) == 52 which is why there is '\n52' in the prefix.
+        */
+        message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n52", signer, withdrawAmount));
+        (sigV, sigR, sigS) = vm.sign(signerKey, message);
+
+        // console.log("v: ", sigV);
+        // console.logBytes32(sigR);
+        // console.logBytes32(sigS);
+    }
+
+    function test_verifyValidSigner() public {
+        assertTrue(r0_q16.verify(signer, message, sigV, sigR, sigS));
+    }
+
+    function test_verifyInValidSigner() public {
+        // verify using an attacker address should not work
+        assertFalse(r0_q16.verify(attacker, message, sigV, sigR, sigS));
+        // verify using a different message to the one signed should not work
+        bytes32 attackerMessage = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n52", attacker, withdrawAmount));
+        assertFalse(r0_q16.verify(signer, attackerMessage, sigV, sigR, sigS));
+    }
+
+    function test_MissingZerAddressCheckMayAllowInvalidSignatures() public {
+        // returns true because ecrecover has an error and returns zero address
+        // we force ecrecover to error by passing in v = 0 (instead of the correct v of 27)
+        // since we pass in the zero address as the 'signer' the verify function returns true
+        assertTrue(r0_q16.verify(address(0x0), message, 0, sigR, sigS));
+
+        // ecrecover for these values returns the zero address
+        assertEq(address(0x0), ecrecover(message, 0, sigR, sigS));
+    }
+
+    function test_replayAttacksDueToMissingNonce() public {
+        // very basic test but its possible, of course, to call verify many times and it will
+        // always return true. Usually its only intended to verify a signed transaction once only so 
+        // a transaction nonce can be maintained in the contract to prevent this
+        assertTrue(r0_q16.verify(signer, message, sigV, sigR, sigS));
+        // keep calling, always verifies
+        assertTrue(r0_q16.verify(signer, message, sigV, sigR, sigS));
+    }
+
+    function test_signatureMalleabilityRiskOfEcrecover() public {
+        assertTrue(r0_q16.verify(signer, message, sigV, sigR, sigS));
+
+        // Manipulate s: flip it to be its negation mod n
+        // The order of the curve, n, is a constant in secp256k1 (Ethereum's elliptic curve)
+        uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+        bytes32 sigSManipulated = bytes32(n - uint256(sigS));
+
+        // Adjust v: flip it between 27 and 28
+        uint8 sigVManipulated = sigV == 27 ? 28 : 27;
+
+        // call verify with the manipulated s and v values will also result in a valid signer check
+        // this means if signer publishs v,r,s on chain an attacker can perform this attack and replay
+        // this transaction using the manupulated values for v and s as shown in this example
+        assertTrue(r0_q16.verify(signer, message, sigVManipulated, sigR, sigSManipulated));
     }
 }

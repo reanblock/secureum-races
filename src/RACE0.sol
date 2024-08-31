@@ -272,3 +272,14 @@ contract R0_Q15 {
 
   receive() external payable{}
 }
+
+contract R0_Q16 {
+  // Assume other required functionality is correctly implemented
+  // Assume that hash is the hash of a message computed elsewhere in contract
+  // Assume that the contract does not make use of chainID or nonces in its logic
+
+  // NOTE: adjusted to external visibility to test
+  function verify(address signer, bytes32 message, uint8 sigV, bytes32 sigR, bytes32 sigS) external view returns (bool) {
+    return signer == ecrecover(message, sigV, sigR, sigS);
+  }
+}
