@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-solc-0.7/utils/ReentrancyGuard.sol";
 
 import {console} from "forge-std/Test.sol";
 
-contract R0Q6 is ReentrancyGuard {
+contract R0_Q6 is ReentrancyGuard {
   // Assume other required functionality is correctly implemented
   // For e.g. users have deposited balances in the contract
   // Assume nonReentrant modifier is always applied

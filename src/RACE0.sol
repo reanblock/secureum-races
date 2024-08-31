@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// R0Q2 - RACE0, QUESTION2
+// R0_Q2 - RACE0, QUESTION2
 contract R0_Q2 {
   // Assume other required functionality is correctly implemented
   function kill() public {
@@ -17,7 +17,7 @@ contract R0_Q2 {
   receive() payable external {}
 }
 
-// R0Q3 - RACE0, QUESTION3
+// R0_Q3 - RACE0, QUESTION3
 contract R0_Q3 {
   address public owner = address(0x39b7A42Fc45A5c669D980161346953e48154682c);
   // Assume other required functionality is correctly implemented
@@ -36,7 +36,7 @@ contract R0_Q3 {
   receive() payable external {}
 }
 
-// R0Q4 - RACE0, QUESTION4
+// R0_Q4 - RACE0, QUESTION4
 contract R0_Q4 {
   // Assume other required functionality is correctly implemented
   
@@ -66,7 +66,7 @@ contract R0_Q4 {
   }
 }
 
-// R0Q5 - RACE0, QUESTION5
+// R0_Q5 - RACE0, QUESTION5
 contract R0_Q5 {
   // Assume other required functionality is correctly implemented
   address private owner = address(0x78c4e41228C2874C436fA57108dC63D9497E5be5);
@@ -92,9 +92,9 @@ contract R0_Q5 {
   }
 }
 
-// R0Q6 - RACE0, QUESTION6 -> refer to ./src/RACE0Q6.sol
+// R0_Q6 - RACE0, QUESTION6 -> refer to ./src/RACE0Q6.sol
 
-// R0Q7 - RACE0, QUESTION7
+// R0_Q7 - RACE0, QUESTION7
 contract R0_Q7 {
   // Assume other required functionality is correctly implemented
   uint256 private constant secret = 123;
@@ -252,4 +252,23 @@ contract R0_Q14 {
         IERC20(token).transfer(recipients[i], amounts[i]);
     }
   }
+}
+
+contract R0_Q15 {
+  // Assume other required functionality is correctly implemented
+  // For e.g. users have deposited balances in the contract
+
+  // for testing added a depoist function
+  function deposit() external payable {
+    balances[msg.sender] = msg.value;
+  }
+   
+  mapping (address => uint256) public balances;
+  
+  function withdrawBalance() external {
+    msg.sender.call{value: balances[msg.sender]}("");
+    balances[msg.sender] = 0;
+  }
+
+  receive() external payable{}
 }
