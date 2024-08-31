@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console, stdError} from "forge-std/Test.sol";
 import {R0_Q2, 
         R0_Q3, 
         R0_Q4, 
@@ -14,10 +14,14 @@ import {R0_Q2,
         R0_Q11_Ownable2Step, 
         R0_Q12,
         R0_Q13,
-        R0_Q13_V2} from "../src/Race0.sol";
+        R0_Q13_V2,
+        R0_Q14} from "../src/Race0.sol";
 
 // import ERC1967Proxy for upgradable contract tests
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
+import { ERC20ReturnFalseMock } from "@openzeppelin/contracts/mocks/token/ERC20ReturnFalseMock.sol";
 
 contract R0_Q2_Test is Test {
     R0_Q2 public r0_q2;
@@ -476,7 +480,6 @@ contract R0_Q13_Test is Test {
     R0_Q13 r0_q13;
     ERC1967Proxy r0_q13_proxy;
     address admin = makeAddr("admin");
-    using ERC1967Utils for address;
 
     function setUp() public {
         // deploy the implementation contract
@@ -549,4 +552,103 @@ contract R0_Q13_Test is Test {
         // Use vm.load to read the value at the storage slot
         implAddressInProxy = address(uint160(uint256((vm.load(address(r0_q13_proxy), erc1967ImplSlot)))));
     }
+}
+
+contract R0_Q14_Test is Test {
+    R0_Q14 r0_q14;
+    address admin = makeAddr("admin");
+    ERC20Mock erc20Mock;
+    uint256 constant ININTIAL_BALANCE = 1_000_000 ether;
+
+    // create two new reward receipients and set the reward amount
+    address recipient0 = makeAddr("recipient0");
+    address recipient1 = makeAddr("recipient1");
+    uint256 rewardAmount = ININTIAL_BALANCE / 2;
+
+    // used to check revert reason
+    error ERC20InvalidReceiver(address receiver);
+
+    function setUp() public {
+        erc20Mock = new ERC20Mock();
+        r0_q14 = new R0_Q14(admin, address(erc20Mock));
+
+        // mint 1M tokens to R0_Q14 to test payRewards
+        erc20Mock.mint(address(r0_q14), ININTIAL_BALANCE);
+    }
+
+    // function test_deployed() public {
+    //     console.log(address(r0_q14));
+    //     console.log(address(erc20Mock));
+    //     console.log(erc20Mock.totalSupply());
+    // }
+
+    function test_payRewards() public {
+        // assert the r0_q14 contract holds the initial balance of tokens
+        assertEq(erc20Mock.balanceOf(address(r0_q14)), ININTIAL_BALANCE);
+
+        // assert that receipients do not hold any tokens
+        assertEq(erc20Mock.balanceOf(recipient0), 0);
+        assertEq(erc20Mock.balanceOf(recipient1), 0);
+
+        // prepare the data to call the payRewards function
+        address[] memory recipients = new address[](2);
+        recipients[0] = recipient0;
+        recipients[1] = recipient1;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = rewardAmount;
+        amounts[1] = rewardAmount;
+
+        // admin calls payRewards function
+        vm.prank(admin);
+        r0_q14.payRewards(recipients, amounts);
+
+        // check recipients hold the expected reward amount of tokens
+        assertEq(erc20Mock.balanceOf(recipient0), rewardAmount);
+        assertEq(erc20Mock.balanceOf(recipient1), rewardAmount);
+    }
+
+    function test_revertsDueToMismatchedLength() public {
+        // prepare the data to call the payRewards function
+        // purposely make recipients array larger than amounts array length
+        address[] memory recipients = new address[](2);
+        recipients[0] = recipient0;
+        recipients[1] = recipient1;
+
+        // make amounts a smaller array than recipients
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = rewardAmount;
+
+        // admin calls payRewards function
+        vm.prank(admin);
+        // expect revert with 'array out-of-bounds access (0x32)' 
+        // (use stdError.indexOOBError)
+        vm.expectRevert(stdError.indexOOBError);
+        r0_q14.payRewards(recipients, amounts);
+    }
+
+    function test_uncheckedReturnValueOfTransfer() public {
+        address[] memory recipients = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        vm.prank(admin);
+        // the current ERC20Mock implements a transfer function that reverts on error
+        // for example when transfer to a zero address will revert with ERC20InvalidReceiver error
+        vm.expectRevert(abi.encodeWithSelector(ERC20InvalidReceiver.selector, address(0x0)));
+        r0_q14.payRewards(recipients, amounts);
+
+        // however, if the ERC20ReturnFalseMock is used the transfer function does not revert but instead returns false
+        // in this situation the transfer could fail sliennty
+        MyBadToken erc20MockReturnFalse = new MyBadToken();
+        // calling transfer will always return false and never revert
+        assertFalse(erc20MockReturnFalse.transfer(address(0x123), 1 ether));
+        R0_Q14 r0_q14_returns_false = new R0_Q14(admin, address(erc20MockReturnFalse));
+        vm.prank(admin);
+        // no revert, fails silenntly if trasnfering real tokens
+        r0_q14_returns_false.payRewards(recipients, amounts);
+    }
+}
+
+contract MyBadToken is ERC20ReturnFalseMock {
+    constructor() ERC20("MyBadToken", "MBT") {}
 }

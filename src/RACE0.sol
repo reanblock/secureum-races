@@ -4,6 +4,7 @@ import {console} from "forge-std/Test.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // R0Q2 - RACE0, QUESTION2
 contract R0_Q2 {
@@ -228,4 +229,27 @@ contract R0_Q13_V2 is Initializable, UUPSUpgradeable {
   }
 
   function _authorizeUpgrade(address) internal override onlyAdmin {}
+}
+
+contract R0_Q14 {
+  // Assume other required functionality is correctly implemented
+  address admin;
+  address token;
+  constructor(address _admin, address _token) {
+    require(_admin != address(0));
+    require(_token != address(0));
+    admin = _admin;
+    token = _token;
+  }
+  
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+  
+  function payRewards(address[] calldata recipients, uint256[] calldata amounts) external onlyAdmin {
+    for (uint i; i < recipients.length; i++) {
+        IERC20(token).transfer(recipients[i], amounts[i]);
+    }
+  }
 }
