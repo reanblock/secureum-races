@@ -2,6 +2,8 @@
 pragma solidity 0.8.20;
 import {console} from "forge-std/Test.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // R0Q2 - RACE0, QUESTION2
 contract R0_Q2 {
@@ -175,4 +177,55 @@ contract R0_Q12 {
   function addLiquidity() payable external {
     pool.transfer(msg.value);
   }
+}
+
+contract R0_Q13 is Initializable, UUPSUpgradeable {
+  // Assume other required functionality is correctly implemented
+  
+  address public admin;
+  uint256 public rewards = 10;
+  
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+  
+  // NOTE: to prevent multiple calls of initialize use this:
+  // function initialize (address _admin) initializer external {
+  function initialize (address _admin) external {
+    require(_admin != address(0));
+    admin = _admin;
+  }
+  
+  function setRewards(uint256 _rewards) external onlyAdmin {
+    rewards = _rewards;
+  }
+
+  // _authorizeUpgrade is required from inheriting UUPSUpgradeable
+  function _authorizeUpgrade(address) internal override onlyAdmin {}
+}
+
+contract R0_Q13_V2 is Initializable, UUPSUpgradeable {
+  address public admin;
+  uint256 public rewards;
+  
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+  
+  function initialize () initializer external {
+    // nothing to do since we keep the same admin
+  }
+  
+  // remove setRewards function
+  // function setRewards(uint256 _rewards) external onlyAdmin {
+  //   rewards = _rewards;
+  // }
+
+  function someNewFeature() external returns(string memory) {
+    return "hello from new feature!";
+  }
+
+  function _authorizeUpgrade(address) internal override onlyAdmin {}
 }

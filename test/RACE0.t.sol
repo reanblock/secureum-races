@@ -12,7 +12,12 @@ import {R0_Q2,
         R0_Q10, 
         R0_Q11, 
         R0_Q11_Ownable2Step, 
-        R0_Q12} from "../src/Race0.sol";
+        R0_Q12,
+        R0_Q13,
+        R0_Q13_V2} from "../src/Race0.sol";
+
+// import ERC1967Proxy for upgradable contract tests
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract R0_Q2_Test is Test {
     R0_Q2 public r0_q2;
@@ -461,5 +466,87 @@ contract R0_Q12_Test is Test {
         
         // the zero address has the lost (burnt) ether
         assertEq(r0_q12.pool().balance, 1 ether);
+    }
+}
+
+
+
+contract R0_Q13_Test is Test {
+    R0_Q13 r0_q13_impl;
+    R0_Q13 r0_q13;
+    ERC1967Proxy r0_q13_proxy;
+    address admin = makeAddr("admin");
+    using ERC1967Utils for address;
+
+    function setUp() public {
+        // deploy the implementation contract
+        r0_q13_impl = new R0_Q13();
+
+        // deploy the proxy contract
+        bytes memory data = abi.encodeWithSelector(R0_Q13.initialize.selector, admin);
+
+        r0_q13_proxy = new ERC1967Proxy(address(r0_q13_impl), data);
+
+        r0_q13 = R0_Q13(address(r0_q13_proxy));
+    }
+
+    // function test_deployed() public {
+    //     console.log("Impl address", address(r0_q13_impl));
+    //     console.log("Proxy address", address(r0_q13_proxy));
+    //     console.log("Admin address", r0_q13.admin());
+    // }
+
+    function test_rewardsWillBeZeroInTheProxyContract() public {
+        // the rewards is zero after deployment
+        assertEq(r0_q13.rewards(), 0);
+        // the setRewards function must be called by an admin to set it
+        vm.prank(admin);
+        r0_q13.setRewards(10);
+        assertEq(r0_q13.rewards(), 10);
+    }
+
+    function test_MultipleInitializeCallsPossible() public {
+        // initialze has already been called setting the default admin
+        assertEq(r0_q13.admin(), admin);
+
+        // however, nothing prevents ANYONE from calling the initialize function!
+        address badAdmin = makeAddr("badAdmin");
+        r0_q13.initialize(badAdmin);
+        // now we have a 'bad admin'
+        assertEq(r0_q13.admin(), badAdmin);
+    }
+
+    /*
+        additional test to check the upgradability since our contract inherits UUPSUpgradeable
+    */
+    function test_UpgradeContract() public {
+        // the impl address in r0_q13_proxy is still the r0_q13_impl contract addresss
+        assertEq(helperGetProxyImplAddressFromSlot(), address(r0_q13_impl));
+
+        R0_Q13_V2 r0_q13_v2 = R0_Q13_V2(address(r0_q13_proxy));
+        // will revert because the proxy has not been upgraded to the new impl yet
+        vm.expectRevert();
+        r0_q13_v2.someNewFeature(); 
+
+        // now deploy the new V2 implementation contract and upgrade the proxy
+        R0_Q13_V2 r0_q13_v2_impl = new R0_Q13_V2();
+        // the v2 initialize function does NOT take any params so the params is set to ""
+        bytes memory data = abi.encodeWithSelector(R0_Q13_V2.initialize.selector, "");
+        vm.prank(admin);
+        r0_q13.upgradeToAndCall(address(r0_q13_v2_impl), data);
+        
+        // the impl address in the r0_q13_proxy is updated to the new v2 impl addresss
+        assertEq(helperGetProxyImplAddressFromSlot(), address(r0_q13_v2_impl));
+
+        // someNewFeature function is now callable via the proxy (does not revert anymore)
+        assertEq(r0_q13_v2.someNewFeature(), "hello from new feature!");
+    }
+
+    function helperGetProxyImplAddressFromSlot() internal returns (address implAddressInProxy) {
+        // ERC1967 Implementation Storage slot
+        bytes32 erc1967ImplSlot = bytes32(uint256(0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc));
+
+        // Use vm.load to read the value at the storage slot
+        implAddressInProxy = address(uint160(uint256((vm.load(address(r0_q13_proxy), erc1967ImplSlot)))));
     }
 }
