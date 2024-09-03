@@ -10,6 +10,7 @@ contract InSecureumDAOTestBase is Test {
 
     function setUp() public virtual {
         dao = new InSecureumDAO(admin);
+        deal(admin, 10 ether);
     }
 }
 
@@ -70,7 +71,6 @@ contract R2_Q1_ForceEther is InSecureumDAOTestForceEther {
 
 // NOTE Q2, Q3, Q4 does not require tests
 
-
 /*
     Test for the InSecureumDAO contract that uses a 
     commit / reveal scheme for voting
@@ -112,3 +112,27 @@ contract R2_Q5 is InSecureumDAOTestBase {
         assertEq(daoCommitReveal.voteCount(vote), 1);
     }
 }
+
+// NOTE Q6 does not require tests
+
+contract R2_Q7 is InSecureumDAOTestBase {
+    address member = makeAddr("member");
+    // address member2 = makeAddr("member2");
+    function test_deleteAllMembersOnlyRemovesAdminAsAMember() public {
+        hoax(member);
+        dao.join{value: 1000}();
+        assertTrue(dao.members(member));
+
+        vm.startPrank(admin);
+        dao.join{value: 1000}();
+        assertTrue(dao.members(admin));
+
+        // admin calls removeAllMembers but only the admin 
+        // member will be deleted!
+        dao.removeAllMembers();
+        assertFalse(dao.members(admin));
+        assertTrue(dao.members(member));
+    }
+}
+
+// NOTE Q8 does not require tests
