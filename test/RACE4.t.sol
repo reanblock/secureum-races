@@ -12,7 +12,9 @@ contract InSecureumTestBase is Test {
     }
 }
 
-contract R4_Q1 is InSecureumTestBase {
+// NOTE Q1, Q2 do not require tests
+
+contract R4 is InSecureumTestBase {
     function test_deployed() public {
         console.log(address(token));
         console.log(token.name());

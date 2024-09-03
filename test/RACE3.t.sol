@@ -4,6 +4,8 @@ pragma solidity 0.8.20;
 import { Test, console } from "forge-std/Test.sol";
 import { InSecureumNFT, ERC721TokenReceiver } from "../src/Race3.sol";
 
+// NOTE Q1, Q3, Q5 and Q7 dodoes not require tests
+
 contract InSecureumNFTTestBase is Test {
     InSecureumNFT nft;
     address payable benificiary = payable(makeAddr("benificiary"));
@@ -12,8 +14,6 @@ contract InSecureumNFTTestBase is Test {
         nft = new InSecureumNFT(benificiary);
     }
 }
-
-// NOTE Q1 does not require tests
 
 contract R3_Q2_Buyer is ERC721TokenReceiver {
     InSecureumNFT nft;
@@ -74,8 +74,6 @@ contract R3_Q2 is InSecureumNFTTestBase {
         assertEq(benificiary.balance, currentPrice);
     }
 }
-
-// NOTE Q3 does not require tests
 
 contract R3_Q4_Attacker is ERC721TokenReceiver {
     InSecureumNFT nft;
@@ -142,8 +140,6 @@ contract R3_Q4 is InSecureumNFTTestBase {
     }
 }
 
-// NOTE Q5 does not require tests
-
 contract R3_Q6 is InSecureumNFTTestBase {
     address attacker = makeAddr("attacker");
 
@@ -169,8 +165,6 @@ contract R3_Q6 is InSecureumNFTTestBase {
         assertEq(nft.getPrice(), 0);
     }
 }
-
-// NOTE Q7 does not require tests
 
 contract R3_Q8 is InSecureumNFTTestBase {
     address attacker1 = makeAddr("attacker1");

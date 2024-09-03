@@ -5,6 +5,8 @@ pragma abicoder v2;
 import { Test, console } from "forge-std/Test.sol";
 import { InSecureumToken } from "../src/Race1.sol";
 
+// NOTE Q2, Q3, Q6, Q7, Q8 do not require tests
+
 contract InSecureumTokenTestBase is Test {
     InSecureumToken token;
     function setUp() public {
@@ -39,8 +41,6 @@ contract R1_Q1 is InSecureumTokenTestBase {
         */ 
     }
 }
-
-// NOTE Q2, Q2 and Q3 do not require tests, moving to Q4 below:
 
 contract R1_Q4 is InSecureumTokenTestBase {
     function test_UnsafeRoundingAllowsUsersToReceiveTokensForFree() public {
@@ -81,5 +81,3 @@ contract R1_Q5 is InSecureumTokenTestBase {
         // etc...
     }
 }
-
-// NOTE Q6, Q7, Q8 does not require tests

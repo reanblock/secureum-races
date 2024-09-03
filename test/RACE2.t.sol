@@ -4,6 +4,8 @@ pragma solidity 0.8.20;
 import { Test, console } from "forge-std/Test.sol";
 import { InSecureumDAO, InSecureumDAOCommitReveal } from "../src/Race2.sol";
 
+// NOTE Q2, Q3, Q4, Q6 and Q8 do not require tests
+
 contract InSecureumDAOTestBase is Test {
     InSecureumDAO dao;
     address admin = makeAddr("admin");
@@ -69,8 +71,6 @@ contract R2_Q1_ForceEther is InSecureumDAOTestForceEther {
     }
 }
 
-// NOTE Q2, Q3, Q4 does not require tests
-
 /*
     Test for the InSecureumDAO contract that uses a 
     commit / reveal scheme for voting
@@ -113,8 +113,6 @@ contract R2_Q5 is InSecureumDAOTestBase {
     }
 }
 
-// NOTE Q6 does not require tests
-
 contract R2_Q7 is InSecureumDAOTestBase {
     address member = makeAddr("member");
     // address member2 = makeAddr("member2");
@@ -134,5 +132,3 @@ contract R2_Q7 is InSecureumDAOTestBase {
         assertTrue(dao.members(member));
     }
 }
-
-// NOTE Q8 does not require tests

@@ -11,36 +11,46 @@ contract InSecureum is Context, IERC20, IERC20Metadata {
     uint256 private _totalSupply;
     string private _name;
     string private _symbol;
+
     constructor(string memory name_, string memory symbol_) {
         _name = name_;
         _symbol = symbol_;
     }
+
     function name() public view virtual override returns (string memory) {
         return _name;
     }
+    
     function symbol() public view virtual override returns (string memory) {
         return _symbol;
     }
+
     function decimals() public view virtual override returns (uint8) {
         return 8;
     }
+
     function totalSupply() public view virtual override returns (uint256) {
         return _totalSupply;
     }
+
     function balanceOf(address account) public view virtual override returns (uint256) {
         return _balances[account];
     }
+
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
+
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
+
     function approve(address spender, uint256 amount) public virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
+
     function transferFrom(
         address sender,
         address recipient,
@@ -55,16 +65,19 @@ contract InSecureum is Context, IERC20, IERC20Metadata {
         _transfer(sender, recipient, amount);
         return false;
     }
+
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
+
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
         require(currentAllowance > subtractedValue, "ERCH20: decreased allowance below zero");
         _approve(_msgSender(), spender, currentAllowance - subtractedValue);
         return true;
     }
+
     function _transfer(
         address sender,
         address recipient,
@@ -80,11 +93,13 @@ contract InSecureum is Context, IERC20, IERC20Metadata {
         _balances[recipient] += amount;
         emit Transfer(sender, recipient, amount);
     }
+    
     function _mint(address account, uint256 amount) external virtual {
         _totalSupply += amount;
         _balances[account] = amount;
         emit Transfer(address(0), account, amount);
     }
+
     function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from zero address");
         require(_balances[account] >= amount, "ERC20: burn amount exceeds balance");
@@ -94,6 +109,7 @@ contract InSecureum is Context, IERC20, IERC20Metadata {
         _totalSupply -= amount;
         emit Transfer(address(0), account, amount);
     }
+
     function _approve(
         address owner,
         address spender,
