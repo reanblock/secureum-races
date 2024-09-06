@@ -17,7 +17,7 @@ contract InSecureumTestBase is Test {
     }
 }
 
-// NOTE Q1, Q2 do not require tests
+// NOTE Q1, Q2, Q4, Q5, Q6, Q7, Q8 do not require tests
 
 contract R4 is InSecureumTestBase {
     function test_deployed() public {
