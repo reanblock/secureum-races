@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 // Mock ERC20 for using in test
 import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 
+// NOTE Q2, Q3, Q4, Q5, Q6, Q7, Q8 do not require tests
+
 contract InSecureumLandTestBase is Test {
     InSecureumLand nft;
     address operator = makeAddr("operator");
@@ -48,7 +50,7 @@ contract InSecureumLandTestBase is Test {
 
         InSecureumLand.ContributorAmount memory contributor1 = InSecureumLand.ContributorAmount({
             contributor: contributor,
-            amount: 9
+            amount: 4
         });
 
         InSecureumLand.ContributorAmount[] memory contributors = new InSecureumLand.ContributorAmount[](1);
@@ -74,8 +76,6 @@ contract InSecureumLandTestBase is Test {
         erc20Mock.approve(address(nft), type(uint256).max);
     }
 }
-
-// NOTE __  do not require tests
 
 contract InSecureumLandMerkleTree is InSecureumLandTestBase {
      /*
