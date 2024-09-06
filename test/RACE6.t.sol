@@ -97,6 +97,17 @@ contract InSecureumLandMerkleTree is InSecureumLandTestBase {
         merkleProof = createMerkeProof();
     }
 
+    /*
+        Creates a merkle tree structure for KYC addresses as leaves.
+
+                                root
+                       ___________|____________ 
+                      |                         |
+                 __h(l0,l1)__               ___h(l2,l3)___
+                |           |              |              | 
+                l0          l1            l2              l3
+        h(kycAddress0) h(kycAddress1) h(kycAddress2) h(kycAddress3)
+    */
     function createMerkleRoot() internal returns (bytes32 root) {
         // Calculate the hash values of leaf nodes from a list of addresses.
         leafs.push(keccak256(abi.encodePacked(kycAddress0)));
@@ -112,6 +123,22 @@ contract InSecureumLandMerkleTree is InSecureumLandTestBase {
         root = keccak256(abi.encodePacked(level2[1], level2[0]));
     }
 
+    /*
+        Creates a proof to use for leaf 0 (kycAddress0). Merkle Proofs only 
+        require alternating sides of tree nodes to reach the merkle root.
+
+        Given the user provides the value of l0 then only two nodes: 
+        l1, and h(l2,l3) are required for the proof (marked with ✓  below):
+
+                                root
+                       ___________|____________ 
+                      |                         |
+                   h(l0,l1)                   h(l2,l3)
+                 _____|_____                _____(✓)______
+                |           |              |              | 
+                l0          l1            l2              l3
+            (provided)      (✓)
+    */
     function createMerkeProof() internal returns(bytes32[] memory proof) {
         // NOTE this is specifically the proof for leafs index 0 (kycAddress0)
         proof = new bytes32[](2);
@@ -161,5 +188,6 @@ contract R6_Q1 is InSecureumLandMerkleTree {
         // when calling from a KYC address and valid merkle proof, it works!
         vm.prank(kycAddress0);
         nft.mintLands(1, merkleProof);
+
     }
 }
