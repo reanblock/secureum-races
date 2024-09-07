@@ -17,3 +17,4 @@ Below are links to the Reanblock video on YouTube and the actual RACE
 |**RACE #4**|[RACE #4 Reanblock Video]()|[RACE #4 MCQ](https://ventral.digital/posts/2022/2/9/secureum-bootcamp-february-race-4/)|
 |**RACE #5**|[RACE #5 Reanblock Video]()|[RACE #5 MCQ](https://ventral.digital/posts/2022/3/8/secureum-bootcamp-epoch-march-race-5/)|
 |**RACE #6**|[RACE #6 Reanblock Video]()|[RACE #6 MCQ](https://ventral.digital/posts/2022/5/16/secureum-bootcamp-epoch-may-race-6/)|
+|**RACE #7**|[RACE #7 Reanblock Video]()|[RACE #7 MCQ](https://ventral.digital/posts/2022/07/secureum-bootcamp-epoch-june-race-7/)|
