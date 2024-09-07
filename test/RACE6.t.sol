@@ -2,13 +2,17 @@
 pragma solidity 0.8.20;
 
 import { Test, console } from "forge-std/Test.sol";
-import { InSecureumLand } from "../src/Race6.sol";
+import { InSecureumLand, PatrickInTheGym } from "../src/Race6.sol";
 
 // for testing MerkleProof library
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 // Mock ERC20 for using in test
 import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
+
+
+// Mock for testing ChainLink VRF
+import { VRFCoordinatorV2Mock } from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
 
 // NOTE Q2, Q3, Q4, Q5, Q6, Q7, Q8 do not require tests
 
@@ -189,5 +193,86 @@ contract R6_Q1 is InSecureumLandMerkleTree {
         vm.prank(kycAddress0);
         nft.mintLands(1, merkleProof);
 
+    }
+}
+
+/*
+    Notes for Q6
+    ------------
+
+    The InSecureumLand contract uses Chainlink VRF V1 which is DEPRECIATED. 
+    Instead the latest Chainlink VRF V2 should be used:
+
+    @chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol
+
+    The 'PatrickInTheGym' contract, which is tested below 
+    in 'PatrickInTheGymTest' contract is an example that uses VRFConsumerBaseV2
+    and the VRFCoordinatorV2Mock contract for testing randomnes.
+
+    The 'PatrickInTheGym' examples are taken from: 
+    https://blog.developerdao.com/the-developers-guide-to-chainlink-vrf-foundry-edition
+*/
+
+contract PatrickInTheGymTest is Test {
+    // Creating instances of the main contract and the mock contract
+    PatrickInTheGym public patrickInTheGym;
+    VRFCoordinatorV2Mock public mock;
+
+    // To keep track of the number of NFTs of each tokenID
+    mapping(uint256 => uint256) supplytracker;
+
+    address alpha = address(1);
+
+    function setUp() public {
+        // NOTE: In real-world scenarios, you won't be deciding the 
+        // constructor values of the coordinator contract 
+        mock = new VRFCoordinatorV2Mock(100000000000000000, 1000000000);
+
+        // Creating a new subscription through the alpha account 0x1
+        vm.prank(alpha);
+        uint64 subId = mock.createSubscription();
+
+        // Funding the subscription with 1000 LINK
+        mock.fundSubscription(subId, 1000 ether);
+
+        // Creating a new instance of the main consumer contract
+        patrickInTheGym = new PatrickInTheGym(subId, address(mock));
+
+        // Adding the consumer contract to the subscription
+        // Only owner of subscription can add consumers
+        vm.prank(alpha);
+        mock.addConsumer(subId, address(patrickInTheGym));
+    }
+
+    function test_Randomness() public {
+        for (uint i = 1; i <= 1000; i++) {
+            // Creating a random address using the variable {i}
+            // Useful to call the mint function from a 100 different addresses
+            address addr = address(bytes20(uint160(i)));
+            vm.prank(addr);
+            uint requestID = patrickInTheGym.mint();
+
+            // Have to impersonate the VRFCoordinatorV2Mock contract
+            // since only the VRFCoordinatorV2Mock contract 
+            // can call the fulfillRandomWords function
+            // essentially in this test we are the off-chain service that generates the 
+            // random numbers and calls the fulfillRandomWords on the co-ordinator
+            vm.prank(address(mock));
+            mock.fulfillRandomWords(requestID,address(patrickInTheGym));
+        }
+
+        // Calling the total supply function on all tokenIDs
+        // to get a final tally, before logging the values.
+        supplytracker[1] = patrickInTheGym.totalSupply(1);
+        supplytracker[2] = patrickInTheGym.totalSupply(2);
+        supplytracker[3] = patrickInTheGym.totalSupply(3);
+
+        assertEq(supplytracker[1], 12);
+        assertEq(supplytracker[2], 329);
+        assertEq(supplytracker[3], 659);
+
+        // console.log("Supply with tokenID 1 is " , supplytracker[1]);
+        // console.log("Supply with tokenID 2 is " , supplytracker[2]);
+        // console.log("Supply with tokenID 3 is " , supplytracker[3]);
     }
 }
